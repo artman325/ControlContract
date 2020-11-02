@@ -1,6 +1,8 @@
 const BN = require('bn.js'); // https://github.com/indutny/bn.js
 const util = require('util');
-const ControlContract = artifacts.require("ControlContract");
+const ControlContract = artifacts.require("ControlContractMock");
+const CommunityMock = artifacts.require("CommunityMock");
+const SomeExternalMock = artifacts.require("SomeExternalMock");
 
 const ERC20Mintable = artifacts.require("ERC20Mintable");
 
@@ -36,211 +38,95 @@ contract('ControlContract', (accounts) => {
     const decimals = 1000000000000000000;
     const oneEther = 1*decimals; // 1eth
     const zeroAddress = "0x0000000000000000000000000000000000000000";
-    
-    it('test howManyDecideOwners option and transfer method', async () => {
-        const TokenInstance = await ERC20Mintable.new('t','t', { from: accountTen});
-        const ControlContractInstance = await ControlContract.new({ from: accountOne });
+   
+    it('simple test method with no params', async () => {
+        var CommunityMockInstance = await CommunityMock.new({from: accountTen});
+        var ControlContractInstance = await ControlContract.new(CommunityMockInstance.address, { from: accountTen });
+        var SomeExternalMockInstance = await SomeExternalMock.new({from: accountTen});
+        var counterBefore = await SomeExternalMockInstance.viewCounter({from: accountTen});
         
-        //only all owners
-        let howManyDecideOwners = 3;
-        await ControlContractInstance.transferOwnershipWithHowMany([accountOne, accountTwo, accountThree], howManyDecideOwners, { from: accountOne });
+        let funcHexademicalStr = await SomeExternalMockInstance.returnFuncSignatureHexadecimalString({ from: accountTen });
+        await ControlContractInstance.allowInvoked('sub-admins',SomeExternalMockInstance.address,funcHexademicalStr,{ from: accountTen });
+        await ControlContractInstance.allowEndorsed('members',SomeExternalMockInstance.address,funcHexademicalStr,{ from: accountTen });
         
-        await TokenInstance.mint(ControlContractInstance.address, '0x'+(1*decimals).toString(16), { from: accountTen});
         
-        let balanceControl_1,balanceControl_2,balanceControl_3,balanceControl_4,
-            balanceaccountFourth_1,balanceaccountFourth_2,balanceaccountFourth_3,balanceaccountFourth_4;
-        
-        balanceControl_1 = (await TokenInstance.balanceOf(ControlContractInstance.address));
-        balanceaccountFourth_1 = (await TokenInstance.balanceOf(accountFourth));
-        
-        await ControlContractInstance.transferOperation(TokenInstance.address, accountFourth, '0x'+(1*decimals).toString(16), { from: accountOne});
-        balanceControl_2 = (await TokenInstance.balanceOf(ControlContractInstance.address));
-        balanceaccountFourth_2 = (await TokenInstance.balanceOf(accountFourth));
-        
-        await ControlContractInstance.transferOperation(TokenInstance.address, accountFourth, '0x'+(1*decimals).toString(16), { from: accountTwo});
-        balanceControl_3 = (await TokenInstance.balanceOf(ControlContractInstance.address));
-        balanceaccountFourth_3 = (await TokenInstance.balanceOf(accountFourth));
-        
-        await ControlContractInstance.transferOperation(TokenInstance.address, accountFourth, '0x'+(1*decimals).toString(16), { from: accountThree});
-        balanceControl_4 = (await TokenInstance.balanceOf(ControlContractInstance.address));
-        balanceaccountFourth_4 = (await TokenInstance.balanceOf(accountFourth));
-       
-        assert.equal(
-            new BN(balanceControl_1+'',10).toString(16),
-            new BN(balanceControl_2+'',10).toString(16),
-            'Balance changed before last owner confirm'
-        );
-        assert.equal(
-            new BN(balanceControl_2+'',10).toString(16),
-            new BN(balanceControl_3+'',10).toString(16),
-            'Balance changed before last owner confirm'
-        );
-        assert.equal(
-            new BN(balanceaccountFourth_1+'',10).toString(16),
-            new BN(balanceaccountFourth_2+'',10).toString(16),
-            'Balance changed before last owner confirm'
-        );
-        assert.equal(
-            new BN(balanceaccountFourth_2+'',10).toString(16),
-            new BN(balanceaccountFourth_3+'',10).toString(16),
-            'Balance changed before last owner confirm'
+        await ControlContractInstance.invoke(
+            SomeExternalMockInstance.address,
+            funcHexademicalStr,
+            '', //string memory params,
+            1, //uint256 minimum,
+            1 //uint256 fraction
+            , { from: accountOne }
         );
         
-        assert.equal(
-            new BN(balanceControl_1+'',10).toString(16),
-            new BN(balanceaccountFourth_4+'',10).toString(16),
-            'Balance is not changed'
-        );
-        assert.equal(
-            new BN(balanceControl_4+'',10).toString(16),
-            new BN(balanceaccountFourth_1+'',10).toString(16),
-            'Balance is not changed'
-        );
+        var invokeID; 
+        await ControlContractInstance.getPastEvents('OperationInvoked', {
+            filter: {addr: accountOne}, 
+            fromBlock: 0,
+            toBlock: 'latest'
+        }, function(error, events){ })
+        .then(function(events){
+            invokeID = events[0].returnValues['invokeID'];
+        });
+
+
+        await ControlContractInstance.endorse(invokeID, { from: accountTwo });
         
+        await ControlContractInstance.endorse(invokeID, { from: accountThree });
+        
+        var counterAfter = await SomeExternalMockInstance.viewCounter({from: accountTen});
+        
+        assert.equal(counterAfter-counterBefore, 1,'counter doest not work');
         
     });
     
-    it('test approveOperation', async () => {
-        const TokenInstance = await ERC20Mintable.new('t','t', { from: accountTen});
-        const ControlContractInstance = await ControlContract.new({ from: accountOne });
+    it('simple test method with params (mint tokens)', async () => {
+        var CommunityMockInstance = await CommunityMock.new({from: accountTen});
+        var ControlContractInstance = await ControlContract.new(CommunityMockInstance.address, { from: accountTen });
         
-        //only all owners
-        let howManyDecideOwners = 3;
-        await ControlContractInstance.transferOwnershipWithHowMany([accountOne, accountTwo, accountThree], howManyDecideOwners, { from: accountOne });
+        var ERC20MintableInstance = await ERC20Mintable.new('t1','t1',{from: accountTen});
         
-        await TokenInstance.mint(ControlContractInstance.address, '0x'+(1*decimals).toString(16), { from: accountTen});
+        await ERC20MintableInstance.transferOwnership(ControlContractInstance.address,{from: accountTen});
         
-        let balanceControl_1,balanceControl_2,balanceControl_3,balanceControl_4,
-            balanceaccountFourth_1,balanceaccountFourth_2,balanceaccountFourth_3,balanceaccountFourth_4;
+        var counterBefore = await ERC20MintableInstance.balanceOf(accountFive, {from: accountTen});
+
+            
+        //0x40c10f19000000000000000000000000ea674fdde714fd979de3edf0f56aa9716b898ec80000000000000000000000000000000000000000000000008ac7230489e80000
+        let funcHexademicalStr = '40c10f19';
+        let memoryParamsHexademicalStr = '000000000000000000000000'+(accountFive.replace('0x',''))+'0000000000000000000000000000000000000000000000008ac7230489e80000';
+        await ControlContractInstance.allowInvoked('sub-admins',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        await ControlContractInstance.allowEndorsed('members',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+
         
-        balanceControl_1 = (await TokenInstance.balanceOf(ControlContractInstance.address));
-        balanceaccountFourth_1 = (await TokenInstance.balanceOf(accountFourth));
-        
-        await truffleAssert.reverts(
-            TokenInstance.transferFrom(ControlContractInstance.address, accountFourth, '0x'+(1*decimals).toString(16), { from: accountFourth}),
-            "ERC20: transfer amount exceeds allowance"
-        );
-        await ControlContractInstance.approveOperation(TokenInstance.address, accountFourth, '0x'+(1*decimals).toString(16), { from: accountOne});
-        balanceControl_2 = (await TokenInstance.balanceOf(ControlContractInstance.address));
-        balanceaccountFourth_2 = (await TokenInstance.balanceOf(accountFourth));
-        
-        await truffleAssert.reverts(
-            TokenInstance.transferFrom(ControlContractInstance.address, accountFourth, '0x'+(1*decimals).toString(16), { from: accountFourth}),
-            "ERC20: transfer amount exceeds allowance"
-        );
-        await ControlContractInstance.approveOperation(TokenInstance.address, accountFourth, '0x'+(1*decimals).toString(16), { from: accountTwo});
-        balanceControl_3 = (await TokenInstance.balanceOf(ControlContractInstance.address));
-        balanceaccountFourth_3 = (await TokenInstance.balanceOf(accountFourth));
-        
-        await truffleAssert.reverts(
-            TokenInstance.transferFrom(ControlContractInstance.address, accountFourth, '0x'+(1*decimals).toString(16), { from: accountFourth}),
-            "ERC20: transfer amount exceeds allowance"
-        );
-        await ControlContractInstance.approveOperation(TokenInstance.address, accountFourth, '0x'+(1*decimals).toString(16), { from: accountThree});
-        
-        await TokenInstance.transferFrom(ControlContractInstance.address, accountFourth, '0x'+(1*decimals).toString(16), { from: accountFourth});
-        
-        balanceControl_4 = (await TokenInstance.balanceOf(ControlContractInstance.address));
-        balanceaccountFourth_4 = (await TokenInstance.balanceOf(accountFourth));
-       
-        assert.equal(
-            new BN(balanceControl_1+'',10).toString(16),
-            new BN(balanceControl_2+'',10).toString(16),
-            'Balance changed before last owner confirm'
-        );
-        assert.equal(
-            new BN(balanceControl_2+'',10).toString(16),
-            new BN(balanceControl_3+'',10).toString(16),
-            'Balance changed before last owner confirm'
-        );
-        assert.equal(
-            new BN(balanceaccountFourth_1+'',10).toString(16),
-            new BN(balanceaccountFourth_2+'',10).toString(16),
-            'Balance changed before last owner confirm'
-        );
-        assert.equal(
-            new BN(balanceaccountFourth_2+'',10).toString(16),
-            new BN(balanceaccountFourth_3+'',10).toString(16),
-            'Balance changed before last owner confirm'
+        await ControlContractInstance.invoke(
+            ERC20MintableInstance.address,
+            funcHexademicalStr,
+            memoryParamsHexademicalStr, //string memory params,
+            1, //uint256 minimum,
+            1 //uint256 fraction
+            , { from: accountOne }
         );
         
-        assert.equal(
-            new BN(balanceControl_1+'',10).toString(16),
-            new BN(balanceaccountFourth_4+'',10).toString(16),
-            'Balance is not changed'
-        );
-        assert.equal(
-            new BN(balanceControl_4+'',10).toString(16),
-            new BN(balanceaccountFourth_1+'',10).toString(16),
-            'Balance is not changed'
-        );
+        var invokeID; 
+        await ControlContractInstance.getPastEvents('OperationInvoked', {
+            filter: {addr: accountOne}, 
+            fromBlock: 0,
+            toBlock: 'latest'
+        }, function(error, events){ })
+        .then(function(events){
+            invokeID = events[0].returnValues['invokeID'];
+        });
+
+
+        await ControlContractInstance.endorse(invokeID, { from: accountTwo });
+        
+        await ControlContractInstance.endorse(invokeID, { from: accountThree });
+        
+        var counterAfter = await ERC20MintableInstance.balanceOf(accountFive, {from: accountTen});
+        
+        assert.equal(counterAfter-counterBefore, 10*oneEther,'balance doest not equal');
+        
     });
     
     
-    it('test transferFromOperation', async () => {
-        const TokenInstance = await ERC20Mintable.new('t','t', { from: accountTen});
-        const ControlContractInstance = await ControlContract.new({ from: accountOne });
-        
-        //only all owners
-        let howManyDecideOwners = 3;
-        await ControlContractInstance.transferOwnershipWithHowMany([accountOne, accountTwo, accountThree], howManyDecideOwners, { from: accountOne });
-        
-        await TokenInstance.mint(accountFourth, '0x'+(1*decimals).toString(16), { from: accountTen});
-        
-        
-        let balanceControl_1,balanceControl_2,balanceControl_3,balanceControl_4,
-            balanceaccountFourth_1,balanceaccountFourth_2,balanceaccountFourth_3,balanceaccountFourth_4;
-        
-        
-        await TokenInstance.approve(ControlContractInstance.address, '0x'+(1*decimals).toString(16), { from: accountFourth});
-        
-        balanceControl_1 = (await TokenInstance.balanceOf(ControlContractInstance.address));
-        balanceaccountFourth_1 = (await TokenInstance.balanceOf(accountFourth));
-        
-        await ControlContractInstance.transferFromOperation(TokenInstance.address, accountFourth, ControlContractInstance.address, '0x'+(1*decimals).toString(16), { from: accountOne});
-        balanceControl_2 = (await TokenInstance.balanceOf(ControlContractInstance.address));
-        balanceaccountFourth_2 = (await TokenInstance.balanceOf(accountFourth));
-        
-        await ControlContractInstance.transferFromOperation(TokenInstance.address, accountFourth, ControlContractInstance.address, '0x'+(1*decimals).toString(16), { from: accountTwo});
-        balanceControl_3 = (await TokenInstance.balanceOf(ControlContractInstance.address));
-        balanceaccountFourth_3 = (await TokenInstance.balanceOf(accountFourth));
-        
-        await ControlContractInstance.transferFromOperation(TokenInstance.address, accountFourth, ControlContractInstance.address, '0x'+(1*decimals).toString(16), { from: accountThree});
-        
-        
-        balanceControl_4 = (await TokenInstance.balanceOf(ControlContractInstance.address));
-        balanceaccountFourth_4 = (await TokenInstance.balanceOf(accountFourth));
-       
-        assert.equal(
-            new BN(balanceControl_1+'',10).toString(16),
-            new BN(balanceControl_2+'',10).toString(16),
-            'Balance changed before last owner confirm'
-        );
-        assert.equal(
-            new BN(balanceControl_2+'',10).toString(16),
-            new BN(balanceControl_3+'',10).toString(16),
-            'Balance changed before last owner confirm'
-        );
-        assert.equal(
-            new BN(balanceaccountFourth_1+'',10).toString(16),
-            new BN(balanceaccountFourth_2+'',10).toString(16),
-            'Balance changed before last owner confirm'
-        );
-        assert.equal(
-            new BN(balanceaccountFourth_2+'',10).toString(16),
-            new BN(balanceaccountFourth_3+'',10).toString(16),
-            'Balance changed before last owner confirm'
-        );
-        
-        assert.equal(
-            new BN(balanceControl_1+'',10).toString(16),
-            new BN(balanceaccountFourth_4+'',10).toString(16),
-            'Balance is not changed'
-        );
-        assert.equal(
-            new BN(balanceControl_4+'',10).toString(16),
-            new BN(balanceaccountFourth_1+'',10).toString(16),
-            'Balance is not changed'
-        );
-    });
 });

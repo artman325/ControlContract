@@ -1,103 +1,63 @@
 # ControlContract
-Contract is implementation of Multiownable contract as improvement to OpenZeppelin Ownable contract
+Lets a community collectively manage a wallet and tokens by calliing any method from external contract
+
 # Deploy
-when deploy it is no need to pass parameters in to constructor
+when deploy it is need to pass parameters in to constructor
+Params:
+name  | type | description
+--|--|--
+communityAddr|address|address of community contract
 
 # Methods
  
-## transferOperation
-implementation `ERC20 transfer`
+## invoke
+method will initiate a creation transaction. return `invokeID` - invoke identificator
 Params:
 name  | type | description
 --|--|--
-token|IERC20|address of erc20 token
-recipient|address|recipient
-amount|uint256|amount
+tokenAddr|address|address of external token
+method|hexadecimal string|method of external token that would be executed
+params|hexadecimal string|params of external token's method
+minimum|uint256|minimum
+fraction|uint256|fraction value mul by 1e10
 
-## approveOperation
-implementation `ERC20 approve`
+## endorse
+endorsed transactino by `invokeID`
 Params:
 name  | type | description
 --|--|--
-token|IERC20|address of erc20 token
-spender|address|spender
-amount|uint256|amount
+invokeID|uint256|invoke identificator
 
-## transferFromOperation
-implementation `ERC20 transferFrom`
+## allowInvoked
+allow participant with `roleName` to invoke transaction with `method` of `tokenAddr`
 Params:
 name  | type | description
 --|--|--
-token|IERC20|address of erc20 token
-sender|address|sender
-recipient|address|recipient
-amount|uint256|amount
+roleName|string|role name
+tokenAddr|address| token's address
+method|hexadecimal string|method of external token that would be executed
 
-## cancelPending
-Allows owners to change their mind by cacnelling votesMaskByOperation operations
+## allowEndorsed
+allow participant with `roleName` to endorse transaction with `method` of `tokenAddr`
 Params:
 name  | type | description
 --|--|--
-operation|bytes32| identifactor of operation see event `OperationCreated`
+roleName|string|role name
+tokenAddr|address| token's address
+method|hexadecimal string|method of external token that would be executed
 
-## transferOwnershipWithHowMany
-Allows owners to change ownership
-Params:
-name  | type | description
---|--|--
-newOwners|address[]|array of addresses of new owners
-newHowManyOwnersDecide|uint256|how many owners can decide
-
-# Events
-
-## OwnershipTransferred
-name  | type 
---|--
-previousOwners|address[]
-howManyOwnersDecide|uint
-newOwners|address[]
-newHowManyOwnersDecide|uint
-
-## OperationCreated
-name  | type 
---|--
-operation|bytes32
-howMany|uint
-ownersCount|uint
-proposer|address
-
-## OperationUpvoted
-name  | type 
---|--
-operation|bytes32
-votes|uint
-howMany|uint
-ownersCount|uint
-upvoter|address
-
-## OperationPerformed
-name  | type 
---|--
-operation|bytes32
-howMany|uint
-ownersCount|uint
-performer|address
-
-## OperationDownvoted
-name  | type 
---|--
-operation|bytes32
-votes|uint
-ownersCount|uint
-downvoter|address
-
-## OperationCancelled
-name  | type 
---|--
-operation|bytes32
-lastCanceller|address
 
 # Lifecycle
-* deploy ControlContract
-* make transaction transferOwnershipWithHowMany(newOwners, newHowManyOwnersDecide) see `transferOwnershipWithHowMany`
-* After that our ControlContract is multi ownable. that's mean that transaction, for examle `transfer` will execute only if all owners execute `transfer` with the same parameters.
+* deploy ControlContract wwith address of community contract
+* for example we want to execute transaction that mint 10 ERC20 tokens to `<address 1>` for example `0xea674fdde714fd979de3edf0f56aa9716b898ec8`.
+    * allow <address 2> with "role2" to invoke such transactions calling method `allowInvoked` with params:
+    roleName = 'role2'
+    tokenAddr = '<erc20 token>'
+    method = '40c10f19' //// first 4 bytes of the Keccak hash of the ASCII form of the signature 'mint(address,uint256)' see https://solidity.readthedocs.io/en/latest/abi-spec.html#examples
+    * allow <address 3> with "role3" to endorse such transactions calling method `allowEndorsed` with params:
+    roleName = 'role2'
+    tokenAddr = '<erc20 token>'
+    method = '40c10f19' //// first 4 bytes of the Keccak hash of the ASCII form of the signature 'mint(address,uint256)'
+    * user <address 2> try to invoke calling `invoke('<erc20 token>', '40c10f19','000000000000000000000000ea674fdde714fd979de3edf0f56aa9716b898ec80000000000000000000000000000000000000000000000008ac7230489e80000',1,1)`.  it will emit event `OperationInvoked(invokeID)`
+    * user <address 3> with "role3" try to endorse this transaction by `invokeID`
+    * if count of endorsed people will be more than M= (max(minimum,  memberCount * fraction/1e10)) then transaction will be executed
