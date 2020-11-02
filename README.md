@@ -12,6 +12,7 @@ communityAddr|address|address of community contract
  
 ## invoke
 method will initiate a creation transaction. return `invokeID` - invoke identificator
+
 Params:
 name  | type | description
 --|--|--
@@ -23,6 +24,7 @@ fraction|uint256|fraction value mul by 1e10
 
 ## endorse
 endorsed transactino by `invokeID`
+
 Params:
 name  | type | description
 --|--|--
@@ -30,6 +32,7 @@ invokeID|uint256|invoke identificator
 
 ## allowInvoked
 allow participant with `roleName` to invoke transaction with `method` of `tokenAddr`
+
 Params:
 name  | type | description
 --|--|--
@@ -39,6 +42,7 @@ method|hexadecimal string|method of external token that would be executed
 
 ## allowEndorsed
 allow participant with `roleName` to endorse transaction with `method` of `tokenAddr`
+
 Params:
 name  | type | description
 --|--|--
@@ -48,7 +52,7 @@ method|hexadecimal string|method of external token that would be executed
 
 
 # Lifecycle
-* deploy ControlContract wwith address of community contract
+* deploy ControlContract with address of community contract
 * for example we want to execute transaction that mint 10 ERC20 tokens to `<address 1>` for example `0xea674fdde714fd979de3edf0f56aa9716b898ec8`.
     * allow <address 2> with "role2" to invoke such transactions calling method `allowInvoked` with params:
     roleName = 'role2'
