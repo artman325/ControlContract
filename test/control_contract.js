@@ -46,8 +46,8 @@ contract('ControlContract', (accounts) => {
         var counterBefore = await SomeExternalMockInstance.viewCounter({from: accountTen});
         
         let funcHexademicalStr = await SomeExternalMockInstance.returnFuncSignatureHexadecimalString({ from: accountTen });
-        await ControlContractInstance.allowInvoked('sub-admins',SomeExternalMockInstance.address,funcHexademicalStr,{ from: accountTen });
-        await ControlContractInstance.allowEndorsed('members',SomeExternalMockInstance.address,funcHexademicalStr,{ from: accountTen });
+        await ControlContractInstance.allowInvoke('sub-admins',SomeExternalMockInstance.address,funcHexademicalStr,{ from: accountTen });
+        await ControlContractInstance.allowEndorse('members',SomeExternalMockInstance.address,funcHexademicalStr,{ from: accountTen });
         
         
         await ControlContractInstance.invoke(
@@ -94,8 +94,8 @@ contract('ControlContract', (accounts) => {
         //0x40c10f19000000000000000000000000ea674fdde714fd979de3edf0f56aa9716b898ec80000000000000000000000000000000000000000000000008ac7230489e80000
         let funcHexademicalStr = '40c10f19';
         let memoryParamsHexademicalStr = '000000000000000000000000'+(accountFive.replace('0x',''))+'0000000000000000000000000000000000000000000000008ac7230489e80000';
-        await ControlContractInstance.allowInvoked('sub-admins',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
-        await ControlContractInstance.allowEndorsed('members',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        await ControlContractInstance.allowInvoke('sub-admins',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        await ControlContractInstance.allowEndorse('members',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
 
         
         await ControlContractInstance.invoke(

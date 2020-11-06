@@ -6,10 +6,11 @@ import "./openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "./openzeppelin-contracts/contracts/utils/Address.sol";
 import "./openzeppelin-contracts/contracts/access/Ownable.sol";
 import "./openzeppelin-contracts/contracts/utils/EnumerableSet.sol";
+import "./openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import "./ICommunity.sol";
 import "./lib/StringUtils.sol";
 
-contract ControlContract is Ownable {
+contract ControlContract is Ownable, ReentrancyGuard {
     using Math for uint256;
     using SafeMath for uint256;
     
@@ -112,7 +113,8 @@ contract ControlContract is Ownable {
     function endorse(
         uint256 invokeID
     ) 
-        public 
+        public
+        nonReentrant()
     {
         require(operations[invokeID].exists == true, "Such invokeID does not exist");
         string[] memory roles = getEndorsedRoles(operations[invokeID].addr, operations[invokeID].method, _msgSender());
@@ -145,7 +147,7 @@ contract ControlContract is Ownable {
      * @param tokenAddr token's address
      * @param method hexademical method's string
      */
-    function allowInvoked(string memory roleName,address tokenAddr,string memory method) public onlyOwner {
+    function allowInvoke(string memory roleName,address tokenAddr,string memory method) public onlyOwner {
         roleCheck(roleName);
         invokeAllowed[keccak256(abi.encodePacked(tokenAddr,method))].add(roleIDs[roleName]);
     }
@@ -155,7 +157,7 @@ contract ControlContract is Ownable {
      * @param tokenAddr token's address
      * @param method hexademical method's string
      */
-    function allowEndorsed(string memory roleName,address tokenAddr,string memory method) public onlyOwner {
+    function allowEndorse(string memory roleName,address tokenAddr,string memory method) public onlyOwner {
         roleCheck(roleName);
         endorseAllowed[keccak256(abi.encodePacked(tokenAddr,method))].add(roleIDs[roleName]);
     }
