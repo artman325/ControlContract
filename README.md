@@ -8,6 +8,39 @@ name  | type | description
 --|--|--
 communityAddr|address|address of community contract
 
+Once installed will be use methods:
+<table>
+<thead>
+	<tr>
+		<th>method name</th>
+		<th>called by</th>
+		<th>description</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td><a href="#allowinvoke">allowInvoke</a></td>
+		<td>owner</td>
+		<td>setup role to invoke</td>
+	</tr>
+	<tr>
+		<td><a href="#allowendorse">allowEndorse</a></td>
+		<td>owner</td>
+		<td>setup role to endorse</td>
+	</tr>
+	<tr>
+		<td><a href="#invoke">invoke</a></td>
+		<td>member who can invoke (see <a href="#allowinvoke">allowInvoke</a>)</td>
+		<td>initiating transaction</td>
+	</tr>
+	<tr>
+		<td><a href="#endorse">endorse</a></td>
+		<td>member who can endorse (see <a href="#allowendorse">allowEndorse</a>)</td>
+		<td>endorsing transaction</td>
+	</tr>
+</tbody>
+</table>
+
 # Methods
  
 ## invoke
