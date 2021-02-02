@@ -39,7 +39,8 @@ contract ControlContract is Ownable, ReentrancyGuard {
     }
     
     mapping(uint256 => Operation) internal operations;
-    
+    mapping(uint40 => uint256) internal keysWei;
+
     mapping(bytes32 => EnumerableSet.UintSet) invokeAllowed;
     mapping(bytes32 => EnumerableSet.UintSet) endorseAllowed;
     
@@ -60,9 +61,9 @@ contract ControlContract is Ownable, ReentrancyGuard {
         _;
     }
     
-    event OperationInvoked(uint256 indexed invokeID, address tokenAddr, string method, string params);
-    event OperationEndorsed(uint256 indexed invokeID);
-    event OperationExecuted(uint256 indexed invokeID);
+    event OperationInvoked(uint256 indexed invokeID, uint40 invokeIDWei,  address tokenAddr, string method, string params);
+    event OperationEndorsed(uint256 indexed invokeID, uint40 invokeIDWei);
+    event OperationExecuted(uint256 indexed invokeID, uint40 invokeIDWei);
     
     /**
      * @param communityAddr community address 
@@ -92,10 +93,14 @@ contract ControlContract is Ownable, ReentrancyGuard {
     )
         public 
         canInvoke(tokenAddr, method, _msgSender())
-        returns(uint256 invokeID)
+        returns(uint256 invokeID, uint40 invokeIDWei)
     {
         invokeID = generateInvokeID();
-        emit OperationInvoked(invokeID, tokenAddr, method, params);
+        invokeIDWei = uint40(invokeID);
+        
+        keysWei[invokeIDWei] = invokeID;
+        
+        emit OperationInvoked(invokeID, invokeIDWei, tokenAddr, method, params);
         
         operations[invokeID].addr = tokenAddr;
         operations[invokeID].method = method;
@@ -104,6 +109,7 @@ contract ControlContract is Ownable, ReentrancyGuard {
         operations[invokeID].fraction = fraction;
         
         operations[invokeID].exists = true;
+        
         
     }
     
@@ -114,32 +120,8 @@ contract ControlContract is Ownable, ReentrancyGuard {
         uint256 invokeID
     ) 
         public
-        nonReentrant()
     {
-        require(operations[invokeID].exists == true, "Such invokeID does not exist");
-        string[] memory roles = getEndorsedRoles(operations[invokeID].addr, operations[invokeID].method, _msgSender());
-        require(roles.length > 0, "Sender has not in Endorse role");
-        require(operations[invokeID].endorsedAccounts.contains(_msgSender()) == false, 'Sender is already endorse this transaction');
-        require(operations[invokeID].proceed == false, 'Transaction have already executed');
-        
-        operations[invokeID].endorsedAccounts.add(_msgSender());
-        
-        emit OperationEndorsed(invokeID);
-        
-        uint256 memberCount;
-        for (uint256 i=0; i< roles.length; i++) {
-            memberCount = ICommunity(communityAddress).memberCount(roles[i]);
-            if (operations[invokeID].endorsedAccounts.length() > operations[invokeID].minimum.max(memberCount.mul(operations[invokeID].fraction).div(fractionDiv))) {
-                //addr.call(("7e15a6a70000000000000000000000000000000000000000000000000000000000000003").fromHex());
-                operations[invokeID].proceed = true;
-                (operations[invokeID].success,operations[invokeID].msg) = operations[invokeID].addr.call(
-                    (
-                        string(abi.encodePacked(operations[invokeID].method,operations[invokeID].params))
-                    ).fromHex()
-                );
-                emit OperationExecuted(invokeID);
-            }
-        }
+        _endorse(invokeID);
     }
     
     /**
@@ -161,6 +143,48 @@ contract ControlContract is Ownable, ReentrancyGuard {
         roleCheck(roleName);
         endorseAllowed[keccak256(abi.encodePacked(tokenAddr,method))].add(roleIDs[roleName]);
     }
+    
+    
+    receive() external payable {
+        uint256 invokeID = keysWei[uint40(msg.value)];
+        _endorse(invokeID);
+    }
+    
+    /**
+     * @param invokeID invoke identificator
+     */
+    function _endorse(
+        uint256 invokeID
+    ) 
+        internal
+        nonReentrant()
+    {
+        require(operations[invokeID].exists == true, "Such invokeID does not exist");
+        string[] memory roles = getEndorsedRoles(operations[invokeID].addr, operations[invokeID].method, _msgSender());
+        require(roles.length > 0, "Sender has not in Endorse role");
+        require(operations[invokeID].endorsedAccounts.contains(_msgSender()) == false, 'Sender is already endorse this transaction');
+        require(operations[invokeID].proceed == false, 'Transaction have already executed');
+        
+        operations[invokeID].endorsedAccounts.add(_msgSender());
+        
+        emit OperationEndorsed(invokeID, uint40(invokeID));
+        
+        uint256 memberCount;
+        for (uint256 i=0; i< roles.length; i++) {
+            memberCount = ICommunity(communityAddress).memberCount(roles[i]);
+            if (operations[invokeID].endorsedAccounts.length() > operations[invokeID].minimum.max(memberCount.mul(operations[invokeID].fraction).div(fractionDiv))) {
+                //addr.call(("7e15a6a70000000000000000000000000000000000000000000000000000000000000003").fromHex());
+                operations[invokeID].proceed = true;
+                (operations[invokeID].success,operations[invokeID].msg) = operations[invokeID].addr.call(
+                    (
+                        string(abi.encodePacked(operations[invokeID].method,operations[invokeID].params))
+                    ).fromHex()
+                );
+                emit OperationExecuted(invokeID, uint40(invokeID));
+            }
+        }
+    }
+ 
     
     /**
      * @param tokenAddr token's address

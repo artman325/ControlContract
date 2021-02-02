@@ -44,7 +44,7 @@ Once installed will be use methods:
 # Methods
  
 ## invoke
-method will initiate a creation transaction. return `invokeID` - invoke identificator<br/>
+method will initiate a creation transaction. return `invokeID` - invoke identificator and `invokeIDWei` - value in wei that can be send to contract directly to endorse<br/>
 Params:
 name  | type | description
 --|--|--
@@ -55,7 +55,7 @@ minimum|uint256|minimum
 fraction|uint256|fraction value mul by 1e10
 
 ## endorse
-endorsed transactino by `invokeID`<br/>
+endorsed transaction by `invokeID`<br/>
 Params:
 name  | type | description
 --|--|--
@@ -79,6 +79,34 @@ roleName|string|role name
 tokenAddr|address| token's address
 method|hexadecimal string|method of external token that would be executed
 
+# Events
+
+## OperationInvoked
+happens while calling method <a href="#invoke">invoke</a>
+Params:
+name  | type | description
+--|--|--
+invokeID|uint256|invokeID
+invokeIDWei|uint40|invokeIDWei
+tokenAddr|address| token's address
+method|hexadecimal string| method of external token that would be executed
+params|hexadecimal string| method's params
+
+## OperationEndorsed
+happens while calling method <a href="#endorse">endorse</a> or sending eth directly to contract
+Params:
+name  | type | description
+--|--|--
+invokeID|uint256|invokeID
+invokeIDWei|uint40|invokeIDWei
+
+## OperationExecuted
+happens when transaction should be executed
+Params:
+name  | type | description
+--|--|--
+invokeID|uint256|invokeID
+invokeIDWei|uint40|invokeIDWei
 
 # Lifecycle
 * deploy ControlContract with address of community contract
@@ -93,4 +121,5 @@ method|hexadecimal string|method of external token that would be executed
     method = '40c10f19' //// first 4 bytes of the Keccak hash of the ASCII form of the signature 'mint(address,uint256)'<br/>
     * user <address 2> try to invoke calling `invoke('<erc20 token>', '40c10f19','000000000000000000000000ea674fdde714fd979de3edf0f56aa9716b898ec80000000000000000000000000000000000000000000000008ac7230489e80000',1,1)`.  it will emit event `OperationInvoked(invokeID)`
     * user <address 3> with "role3" try to endorse this transaction by `invokeID`
+    * alternative to calling method `endorse` is send eth directly to contract with value `invokeIDWei` announced in event `OperationInvoked`
     * if count of endorsed people will be more than M=(max(minimum,  memberCount * fraction/1e10)) then transaction will be executed

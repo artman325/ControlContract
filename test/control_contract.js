@@ -107,7 +107,7 @@ contract('ControlContract', (accounts) => {
             , { from: accountOne }
         );
         
-        var invokeID; 
+        var invokeID,invokeIDWei; 
         await ControlContractInstance.getPastEvents('OperationInvoked', {
             filter: {addr: accountOne}, 
             fromBlock: 0,
@@ -115,12 +115,25 @@ contract('ControlContract', (accounts) => {
         }, function(error, events){ })
         .then(function(events){
             invokeID = events[0].returnValues['invokeID'];
+            invokeIDWei = events[0].returnValues['invokeIDWei'];
         });
 
 
         await ControlContractInstance.endorse(invokeID, { from: accountTwo });
+
+        //await ControlContractInstance.endorse(invokeID, { from: accountThree });
         
-        await ControlContractInstance.endorse(invokeID, { from: accountThree });
+        await truffleAssert.reverts(
+            web3.eth.sendTransaction({from: accountTwo, to: ControlContractInstance.address, value: invokeIDWei, gas: 300000}),
+            "Sender is already endorse this transaction"
+        );
+        
+        await truffleAssert.reverts(
+            web3.eth.sendTransaction({from: accountThree, to: ControlContractInstance.address, value: invokeIDWei+2, gas: 300000}),
+            "Such invokeID does not exist"
+        );
+        await web3.eth.sendTransaction({from: accountThree, to: ControlContractInstance.address, value: invokeIDWei, gas: 300000});
+        
         
         var counterAfter = await ERC20MintableInstance.balanceOf(accountFive, {from: accountTen});
         
