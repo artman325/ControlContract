@@ -128,27 +128,17 @@ time|uint256|timestamp in GMT time
 * deploy ControlContract with address of community contract
 * for example we want to execute transaction that mint 10 ERC20 tokens to `<address 1>` for example `0xea674fdde714fd979de3edf0f56aa9716b898ec8`.
     * allow <address 2> with "role2" to invoke and allow <address 3> with "role3" to endorse such transactions calling method `addMethod` with params:<br/>
-    
-tokenAddr = '<erc20 token>'<br/>
-method = '40c10f19' //// first 4 bytes of the Keccak hash of the ASCII form of the signature 'mint(address,uint256)' see https://solidity.readthedocs.io/en/latest/abi-spec.html#examples<br/>
-invokeRoleName = 'role2'<br/>
-endorseRoleName = 'role3'<br/>
-minimum = 1<br/>
-fraction = 1<br/>
-        
-    * allow <address 2> with "role2" to invoke such transactions calling method `allowInvoke` with params:<br/>
-    roleName = 'role2'<br/>
     tokenAddr = '<erc20 token>'<br/>
     method = '40c10f19' //// first 4 bytes of the Keccak hash of the ASCII form of the signature 'mint(address,uint256)' see https://solidity.readthedocs.io/en/latest/abi-spec.html#examples<br/>
-    * allow <address 3> with "role3" to endorse such transactions calling method `allowEndorse` with params:<br/>
-    roleName = 'role2'<br/>
-    tokenAddr = '<erc20 token>'<br/>
-    method = '40c10f19' //// first 4 bytes of the Keccak hash of the ASCII form of the signature 'mint(address,uint256)'<br/>
+    invokeRoleName = 'role2'<br/>
+    endorseRoleName = 'role3'<br/>
+    minimum = 1<br/>
+    fraction = 1<br/>
     * user <address 2> try to invoke calling `invoke('<erc20 token>', '40c10f19','000000000000000000000000ea674fdde714fd979de3edf0f56aa9716b898ec80000000000000000000000000000000000000000000000008ac7230489e80000',1,1)`.  it will emit event `OperationInvoked(invokeID)`
     * user <address 3> with "role3" try to endorse this transaction by `invokeID`
     * alternative to calling method `endorse` is send eth directly to contract with value `invokeIDWei` announced in event `OperationInvoked`
     * if count of endorsed people will be more than M=(max(minimum,  memberCount * fraction/1e10)) then transaction will be executed
-* about ownership
+* about ownership<br/>
     ControlContract have the one owner as usual contract. This owner can specify who can invoke and endorse to execute transactions that will be executed on behalf of the contract. 
     This is indicated in the initialization method: like one group#1 with two roles: who can invoke and who can endorse transactions. 
     The owner can specify several such groups. For example <br/>
