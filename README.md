@@ -21,14 +21,9 @@ Once installed will be use methods:
 		<td>should be executed by the creator immediately after deployment. can be executed only the one time</td>
 	</tr>
 	<tr>
-		<td><a href="#allowinvoke">allowInvoke</a></td>
+		<td><a href="#addmethod">addMethod</a></td>
 		<td>owner</td>
-		<td>setup role to invoke</td>
-	</tr>
-	<tr>
-		<td><a href="#allowendorse">allowEndorse</a></td>
-		<td>owner</td>
-		<td>setup role to endorse</td>
+		<td>setup method, fraction, minimum and roles to invoke/endorse</td>
 	</tr>
 	<tr>
 		<td><a href="#invoke">invoke</a></td>
@@ -62,8 +57,6 @@ name  | type | description
 tokenAddr|address|address of external token
 method|hexadecimal string|method of external token that would be executed
 params|hexadecimal string|params of external token's method
-minimum|uint256|minimum
-fraction|uint256|fraction value mul by 1e10
 
 ## endorse
 endorsed transaction by `invokeID`<br/>
@@ -72,23 +65,18 @@ name  | type | description
 --|--|--
 invokeID|uint256|invoke identificator
 
-## allowInvoke
-allow participant with `roleName` to invoke transaction with `method` of `tokenAddr`<br/>
+## addMethod
+allow participant with `invokeRoleName`/`endorseRoleName` to invoke/endorse transaction with `method` of `tokenAddr`<br/>
+Note that attemptштп add method with different fraction/minimum will revert. so can be added only one time. But roles can be added it any time, just add the same fraction/minimum
 Params:
 name  | type | description
 --|--|--
-roleName|string|role name
-tokenAddr|address| token's address
+tokenAddr|address|address of external token
 method|hexadecimal string|method of external token that would be executed
-
-## allowEndorse
-allow participant with `roleName` to endorse transaction with `method` of `tokenAddr`<br/>
-Params:
-name  | type | description
---|--|--
-roleName|string|role name
-tokenAddr|address|token's address
-method|hexadecimal string|method of external token that would be executed
+invokeRoleName|string| invoke role name
+endorseRoleName|string| endorse role name
+minimum|uint256|minimum
+fraction|uint256|fraction value mul by 1e10
 
 # Events
 
@@ -139,6 +127,15 @@ time|uint256|timestamp in GMT time
 # Lifecycle
 * deploy ControlContract with address of community contract
 * for example we want to execute transaction that mint 10 ERC20 tokens to `<address 1>` for example `0xea674fdde714fd979de3edf0f56aa9716b898ec8`.
+    * allow <address 2> with "role2" to invoke and allow <address 3> with "role3" to endorse such transactions calling method `addMethod` with params:<br/>
+    
+tokenAddr = '<erc20 token>'<br/>
+method = '40c10f19' //// first 4 bytes of the Keccak hash of the ASCII form of the signature 'mint(address,uint256)' see https://solidity.readthedocs.io/en/latest/abi-spec.html#examples<br/>
+invokeRoleName = 'role2'<br/>
+endorseRoleName = 'role3'<br/>
+minimum = 1<br/>
+fraction = 1<br/>
+        
     * allow <address 2> with "role2" to invoke such transactions calling method `allowInvoke` with params:<br/>
     roleName = 'role2'<br/>
     tokenAddr = '<erc20 token>'<br/>

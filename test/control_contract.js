@@ -59,16 +59,22 @@ contract('ControlContract', (accounts) => {
         var counterBefore = await SomeExternalMockInstance.viewCounter({from: accountTen});
         
         let funcHexademicalStr = await SomeExternalMockInstance.returnFuncSignatureHexadecimalString({ from: accountTen });
-        await ControlContractInstance.allowInvoke('sub-admins',SomeExternalMockInstance.address,funcHexademicalStr,{ from: accountTen });
-        await ControlContractInstance.allowEndorse('members',SomeExternalMockInstance.address,funcHexademicalStr,{ from: accountTen });
-        
+        // await ControlContractInstance.allowInvoke('sub-admins',SomeExternalMockInstance.address,funcHexademicalStr,{ from: accountTen });
+        // await ControlContractInstance.allowEndorse('members',SomeExternalMockInstance.address,funcHexademicalStr,{ from: accountTen });
+        await ControlContractInstance.addMethod(
+            SomeExternalMockInstance.address,
+            funcHexademicalStr,
+            'sub-admins',
+            'members',
+            2, //uint256 minimum,
+            1 //uint256 fraction
+            ,{ from: accountTen }
+        )
         
         await ControlContractInstance.invoke(
             SomeExternalMockInstance.address,
             funcHexademicalStr,
-            '', //string memory params,
-            2, //uint256 minimum,
-            1 //uint256 fraction
+            '' //string memory params
             , { from: accountOne }
         );
         
@@ -116,16 +122,22 @@ contract('ControlContract', (accounts) => {
         //0x40c10f19000000000000000000000000ea674fdde714fd979de3edf0f56aa9716b898ec80000000000000000000000000000000000000000000000008ac7230489e80000
         let funcHexademicalStr = '40c10f19';
         let memoryParamsHexademicalStr = '000000000000000000000000'+(accountFive.replace('0x',''))+'0000000000000000000000000000000000000000000000008ac7230489e80000';
-        await ControlContractInstance.allowInvoke('sub-admins',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
-        await ControlContractInstance.allowEndorse('members',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
-
+        // await ControlContractInstance.allowInvoke('sub-admins',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        // await ControlContractInstance.allowEndorse('members',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        await ControlContractInstance.addMethod(
+            ERC20MintableInstance.address,
+            funcHexademicalStr,
+            'sub-admins',
+            'members',
+            2, //uint256 minimum,
+            1 //uint256 fraction
+            ,{ from: accountTen }
+        )
 
         await ControlContractInstance.invoke(
             ERC20MintableInstance.address,
             funcHexademicalStr,
-            memoryParamsHexademicalStr, //string memory params,
-            2, //uint256 minimum,
-            1 //uint256 fraction
+            memoryParamsHexademicalStr //string memory params
             , { from: accountOne }
         );
         
@@ -189,10 +201,42 @@ contract('ControlContract', (accounts) => {
         //0x40c10f19000000000000000000000000ea674fdde714fd979de3edf0f56aa9716b898ec80000000000000000000000000000000000000000000000008ac7230489e80000
         let funcHexademicalStr = '40c10f19';
         let memoryParamsHexademicalStr = '000000000000000000000000'+(accountFive.replace('0x',''))+'0000000000000000000000000000000000000000000000008ac7230489e80000';
-        await ControlContractInstance.allowInvoke('group1_can_invoke',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
-        await ControlContractInstance.allowInvoke('group2_can_invoke',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
-        await ControlContractInstance.allowEndorse('group1_can_endorse',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
-        await ControlContractInstance.allowEndorse('group2_can_endorse',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        // await ControlContractInstance.allowInvoke('group1_can_invoke',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        // await ControlContractInstance.allowInvoke('group2_can_invoke',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        // await ControlContractInstance.allowEndorse('group1_can_endorse',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        // await ControlContractInstance.allowEndorse('group2_can_endorse',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        await ControlContractInstance.addMethod(
+            ERC20MintableInstance.address,
+            funcHexademicalStr,
+            'group1_can_invoke',
+            'group1_can_endorse',
+            1, //uint256 minimum,
+            1 //uint256 fraction
+            ,{ from: accountTen }
+        )
+        
+        
+        await truffleAssert.reverts( 
+            ControlContractInstance.addMethod(
+                ERC20MintableInstance.address,
+                funcHexademicalStr,
+                'group2_can_invoke',
+                'group2_can_endorse',
+                221, //uint256 minimum,
+                331 //uint256 fraction
+                ,{ from: accountTen }
+            ),
+        "Such method has already registered with another minimum and fraction"
+        );
+        await ControlContractInstance.addMethod(
+            ERC20MintableInstance.address,
+            funcHexademicalStr,
+            'group2_can_invoke',
+            'group2_can_endorse',
+            1, //uint256 minimum,
+            1 //uint256 fraction
+            ,{ from: accountTen }
+        )
         
         var invokeID,invokeIDWei; 
         await ControlContractInstance.heartbeat({ from: accountOne });
@@ -209,7 +253,7 @@ contract('ControlContract', (accounts) => {
 // console.log('invokeIDWei=',invokeIDWei.toString());
 //         });
 
-let t1,t2,t3,t4;   
+// let t1,t2,t3,t4;   
 // console.log('[#1]Block=',(await web3.eth.getBlock("latest")).number,' time='+(await web3.eth.getBlock("latest")).timestamp);
         // now active is group1
         // group 2 can not endorse or invoke
@@ -217,9 +261,7 @@ let t1,t2,t3,t4;
             ControlContractInstance.invoke(
                 ERC20MintableInstance.address,
                 funcHexademicalStr,
-                memoryParamsHexademicalStr, //string memory params,
-                1, //uint256 minimum,
-                1 //uint256 fraction
+                memoryParamsHexademicalStr //string memory params
                 , { from: accountThree }
             ),
             "Sender is out of current owner group"
@@ -244,9 +286,7 @@ let t1,t2,t3,t4;
         t3 =await ControlContractInstance.invoke(
             ERC20MintableInstance.address,
             funcHexademicalStr,
-            memoryParamsHexademicalStr, //string memory params,
-            1, //uint256 minimum,
-            1 //uint256 fraction
+            memoryParamsHexademicalStr //string memory params
             , { from: accountThree }
         );
 
@@ -266,9 +306,7 @@ let t1,t2,t3,t4;
         await ControlContractInstance.invoke(
             ERC20MintableInstance.address,
             funcHexademicalStr,
-            memoryParamsHexademicalStr, //string memory params,
-            1, //uint256 minimum,
-            1 //uint256 fraction
+            memoryParamsHexademicalStr //string memory params
             , { from: accountThree }
         );
         
@@ -287,9 +325,7 @@ let t1,t2,t3,t4;
             ControlContractInstance.invoke(
                 ERC20MintableInstance.address,
                 funcHexademicalStr,
-                memoryParamsHexademicalStr, //string memory params,
-                1, //uint256 minimum,
-                1 //uint256 fraction
+                memoryParamsHexademicalStr //string memory params
                 , { from: accountThree }
             ),
             "Sender is out of current owner group"
@@ -324,19 +360,36 @@ let t1,t2,t3,t4;
         //0x40c10f19000000000000000000000000ea674fdde714fd979de3edf0f56aa9716b898ec80000000000000000000000000000000000000000000000008ac7230489e80000
         let funcHexademicalStr = '40c10f19';
         let memoryParamsHexademicalStr = '000000000000000000000000'+(accountFive.replace('0x',''))+'0000000000000000000000000000000000000000000000008ac7230489e80000';
-        await ControlContractInstance.allowInvoke('group1_can_invoke',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
-        await ControlContractInstance.allowInvoke('group2_can_invoke',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
-        await ControlContractInstance.allowEndorse('group1_can_endorse',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
-        await ControlContractInstance.allowEndorse('group2_can_endorse',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        // await ControlContractInstance.allowInvoke('group1_can_invoke',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        // await ControlContractInstance.allowInvoke('group2_can_invoke',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        // await ControlContractInstance.allowEndorse('group1_can_endorse',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        // await ControlContractInstance.allowEndorse('group2_can_endorse',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        await ControlContractInstance.addMethod(
+            ERC20MintableInstance.address,
+            funcHexademicalStr,
+            'group1_can_invoke',
+            'group1_can_endorse',
+            1, //uint256 minimum,
+            1 //uint256 fraction
+            ,{ from: accountTen }
+        )
+        await ControlContractInstance.addMethod(
+            ERC20MintableInstance.address,
+            funcHexademicalStr,
+            'group2_can_invoke',
+            'group2_can_endorse',
+            1, //uint256 minimum,
+            1 //uint256 fraction
+            ,{ from: accountTen }
+        )
+        
         
         await helper.advanceTimeAndBlock(parseInt(groupTimeoutActivity)+10);
         
         await ControlContractInstance.invoke(
             ERC20MintableInstance.address,
             funcHexademicalStr,
-            memoryParamsHexademicalStr, //string memory params,
-            1, //uint256 minimum,
-            1 //uint256 fraction
+            memoryParamsHexademicalStr //string memory params
             , { from: accountThree }
         );
     });
@@ -364,19 +417,35 @@ let t1,t2,t3,t4;
         //0x40c10f19000000000000000000000000ea674fdde714fd979de3edf0f56aa9716b898ec80000000000000000000000000000000000000000000000008ac7230489e80000
         let funcHexademicalStr = '40c10f19';
         let memoryParamsHexademicalStr = '000000000000000000000000'+(accountFive.replace('0x',''))+'0000000000000000000000000000000000000000000000008ac7230489e80000';
-        await ControlContractInstance.allowInvoke('group1_can_invoke',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
-        await ControlContractInstance.allowInvoke('group2_can_invoke',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
-        await ControlContractInstance.allowEndorse('group1_can_endorse',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
-        await ControlContractInstance.allowEndorse('group2_can_endorse',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        // await ControlContractInstance.allowInvoke('group1_can_invoke',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        // await ControlContractInstance.allowInvoke('group2_can_invoke',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        // await ControlContractInstance.allowEndorse('group1_can_endorse',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        // await ControlContractInstance.allowEndorse('group2_can_endorse',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        await ControlContractInstance.addMethod(
+            ERC20MintableInstance.address,
+            funcHexademicalStr,
+            'group1_can_invoke',
+            'group1_can_endorse',
+            1, //uint256 minimum,
+            1 //uint256 fraction
+            ,{ from: accountTen }
+        )
+        await ControlContractInstance.addMethod(
+            ERC20MintableInstance.address,
+            funcHexademicalStr,
+            'group2_can_invoke',
+            'group2_can_endorse',
+            1, //uint256 minimum,
+            1 //uint256 fraction
+            ,{ from: accountTen }
+        )
         
         await helper.advanceTimeAndBlock(parseInt(groupTimeoutActivity)+10);
         
         await ControlContractInstance.invoke(
             ERC20MintableInstance.address,
             funcHexademicalStr,
-            memoryParamsHexademicalStr, //string memory params,
-            1, //uint256 minimum,
-            1 //uint256 fraction
+            memoryParamsHexademicalStr //string memory params
             , { from: accountThree }
         );
         
@@ -394,9 +463,7 @@ let t1,t2,t3,t4;
         await ControlContractInstance.invoke(
             ERC20MintableInstance.address,
             funcHexademicalStr,
-            memoryParamsHexademicalStr, //string memory params,
-            1, //uint256 minimum,
-            1 //uint256 fraction
+            memoryParamsHexademicalStr //string memory params
             , { from: accountThree }
         );
         
@@ -422,15 +489,22 @@ let t1,t2,t3,t4;
                      
         let funcHexademicalStr = 'f2fde38b';
         let memoryParamsHexademicalStr = '000000000000000000000000'+(accountFive.replace('0x',''));
-        await ControlContractInstance.allowInvoke('group1_can_invoke',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
-        await ControlContractInstance.allowEndorse('group1_can_endorse',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
-       
+        // await ControlContractInstance.allowInvoke('group1_can_invoke',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        // await ControlContractInstance.allowEndorse('group1_can_endorse',ERC20MintableInstance.address,funcHexademicalStr,{ from: accountTen });
+        await ControlContractInstance.addMethod(
+            ERC20MintableInstance.address,
+            funcHexademicalStr,
+            'group1_can_invoke',
+            'group1_can_endorse',
+            2, //uint256 minimum,
+            1 //uint256 fraction
+            ,{ from: accountTen }
+        )
+        
         await ControlContractInstance.invoke(
             ERC20MintableInstance.address,
             funcHexademicalStr,
-            memoryParamsHexademicalStr, //string memory params,
-            2, //uint256 minimum,
-            1 //uint256 fraction
+            memoryParamsHexademicalStr //string memory params
             , { from: accountOne }
         );
         

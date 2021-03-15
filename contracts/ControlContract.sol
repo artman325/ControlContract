@@ -50,8 +50,20 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     mapping(string => uint256) roleIDs;
     uint256 private lastRoleIndex;
     
-    mapping(bytes32 => EnumerableSetUpgradeable.UintSet) invokeAllowed;
-    mapping(bytes32 => EnumerableSetUpgradeable.UintSet) endorseAllowed;
+    // mapping(bytes32 => EnumerableSetUpgradeable.UintSet) invokeAllowed;
+    // mapping(bytes32 => EnumerableSetUpgradeable.UintSet) endorseAllowed;
+    
+    struct Method {
+        address addr;
+        string method;
+        uint256 minimum;
+        uint256 fraction;
+        bool exists;
+        EnumerableSetUpgradeable.UintSet invokeRolesAllowed;
+        EnumerableSetUpgradeable.UintSet endorseRolesAllowed;
+    }
+    mapping(bytes32 => Method) methods;
+    
 
     uint256 internal fractionDiv; //  = 1e10
     
@@ -82,9 +94,10 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     ) 
     {
         bool s = false;
+        bytes32 k = keccak256(abi.encodePacked(tokenAddr,method));
         string[] memory roles = ICommunity(communityAddress).getRoles(sender);
         for (uint256 i = 0; i < roles.length; i++) {
-            if (invokeAllowed[keccak256(abi.encodePacked(tokenAddr,method))].contains(roleIDs[roles[i]])) {
+            if (methods[k].invokeRolesAllowed.contains(roleIDs[roles[i]])) {
                 s = true;
             }
         }
@@ -176,21 +189,19 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable {
      * @param tokenAddr address of external token
      * @param method method of external token that would be executed
      * @param params params of external token's method
-     * @param minimum  minimum
-     * @param fraction fraction value mul by 1e10
      * @return invokeID identificator
      */
     function invoke(
         address tokenAddr,
         string memory method,
-        string memory params,
-        uint256 minimum,
-        uint256 fraction
+        string memory params
     )
         public 
         canInvoke(tokenAddr, method, _msgSender())
         returns(uint256 invokeID, uint40 invokeIDWei)
     {
+        bytes32 k = keccak256(abi.encodePacked(tokenAddr,method));
+        require(methods[k].exists == true, "Such method does not exists");
         
         heartbeat();
         
@@ -201,11 +212,11 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         
         emit OperationInvoked(invokeID, invokeIDWei, tokenAddr, method, params);
         
-        groups[currentGroupIndex].operations[invokeID].addr = tokenAddr;
-        groups[currentGroupIndex].operations[invokeID].method = method;
+        groups[currentGroupIndex].operations[invokeID].addr = methods[k].addr;
+        groups[currentGroupIndex].operations[invokeID].method = methods[k].method;
         groups[currentGroupIndex].operations[invokeID].params = params;
-        groups[currentGroupIndex].operations[invokeID].minimum = minimum;
-        groups[currentGroupIndex].operations[invokeID].fraction = fraction;
+        groups[currentGroupIndex].operations[invokeID].minimum = methods[k].minimum;
+        groups[currentGroupIndex].operations[invokeID].fraction = methods[k].fraction;
         
         groups[currentGroupIndex].operations[invokeID].exists = true;
         
@@ -222,39 +233,53 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         heartbeat();
         _endorse(invokeID);
     }
-    
+
     /**
-     * @param roleName role name
      * @param tokenAddr token's address
      * @param method hexademical method's string
+     * @param invokeRoleName invoke rolename
+     * @param invokeRoleName endorse rolename
+     * @param minimum  minimum
+     * @param fraction fraction value mul by 1e10
      */
-    function allowInvoke(
-        string memory roleName,
+    function addMethod(
         address tokenAddr,
-        string memory method
-    ) 
+        string memory method,
+        string memory invokeRoleName,
+        string memory endorseRoleName,
+        uint256 minimum,
+        uint256 fraction
+    )
         public 
         onlyOwner 
     {
-        require(roleExists(roleName), "Rolename does not exists");
-        invokeAllowed[keccak256(abi.encodePacked(tokenAddr,method))].add(roleIDs[roleName]);
-    }
-    
-    /**
-     * @param roleName role name
-     * @param tokenAddr token's address
-     * @param method hexademical method's string
-     */
-    function allowEndorse(
-        string memory roleName,
-        address tokenAddr,
-        string memory method
-    ) 
-        public 
-        onlyOwner 
-    {
-        require(roleExists(roleName), "Rolename does not exists");
-        endorseAllowed[keccak256(abi.encodePacked(tokenAddr,method))].add(roleIDs[roleName]);
+        bytes32 k = keccak256(abi.encodePacked(tokenAddr,method));
+        
+        require(roleExists(invokeRoleName), "Rolename does not exists");
+        require(roleExists(endorseRoleName), "Rolename does not exists");
+        
+        // require(methods[k].exists == false, "Such method has already registered");
+        if (methods[k].exists == false) {
+
+        } else {
+            require(
+                (methods[k].minimum == minimum) && (methods[k].fraction == fraction), 
+                "Such method has already registered with another minimum and fraction"
+            );
+        }
+        
+        
+        
+        
+        
+        methods[k].exists = true;
+        methods[k].addr = tokenAddr;
+        methods[k].method = method;
+        methods[k].minimum = minimum;
+        methods[k].fraction = fraction;
+        methods[k].invokeRolesAllowed.add(roleIDs[invokeRoleName]);
+        methods[k].endorseRolesAllowed.add(roleIDs[endorseRoleName]);
+        
     }
 
     /**
@@ -442,14 +467,14 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 len;
 
         for (uint256 i = 0; i < roles.length; i++) {
-            if (endorseAllowed[keccak256(abi.encodePacked(tokenAddr,method))].contains(roleIDs[roles[i]])) {
+            if (methods[keccak256(abi.encodePacked(tokenAddr,method))].endorseRolesAllowed.contains(roleIDs[roles[i]])) {
                 len = len.add(1);
             }
         }
         string[] memory list = new string[](len);
         uint256 j = 0;
         for (uint256 i = 0; i < roles.length; i++) {
-            if (endorseAllowed[keccak256(abi.encodePacked(tokenAddr,method))].contains(roleIDs[roles[i]])) {
+            if (methods[keccak256(abi.encodePacked(tokenAddr,method))].endorseRolesAllowed.contains(roleIDs[roles[i]])) {
                 list[j] = roles[i];
                 j = j.add(1);
             }
