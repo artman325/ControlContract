@@ -1,11 +1,13 @@
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
 
-import "../openzeppelin-contracts/contracts/access/Ownable.sol";
-import "../ICommunity.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "../interfaces/ICommunity.sol";
 
-contract CommunityMock is Ownable, ICommunity {
+contract CommunityMock is OwnableUpgradeable, ICommunity {
+    
+    mapping(address => string[]) roles;
     uint256 count = 5;
     
     function memberCount(string memory role) public override view returns(uint256) {
@@ -15,13 +17,26 @@ contract CommunityMock is Ownable, ICommunity {
         count = _count;
     }
     
-    function getRoles(address member)public override view returns(string[] memory){
-        string[] memory list = new string[](5);
-        list[0] = 'owners';
-        list[1] = 'admins';
-        list[2] = 'members';
-        list[3] = 'sub-admins';
-        list[4] = 'unkwnowns';
+    function setRoles(address member, string[] memory _roles) public {
+        uint256 len;
+        for(uint256 i = 0; i < _roles.length; i++) {
+            len = roles[member].length;
+            roles[member].push(_roles[i]);
+        }
+        
+        
+    }
+    
+    function getRoles(address member)public override view returns(string[] memory list){
+        // string[] memory list = new string[](5);
+        // list[0] = 'owners';
+        // list[1] = 'admins';
+        // list[2] = 'members';
+        // list[3] = 'sub-admins';
+        // list[4] = 'unkwnowns';
+        
+        list = roles[member];
+        
         return list;
         
     }
