@@ -1,4 +1,5 @@
-pragma solidity >=0.6.0 <0.8.0;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 contract SomeExternalMock {
@@ -12,7 +13,7 @@ contract SomeExternalMock {
         return incrementCount;
     }
     
-    function returnFuncSignatureHexadecimalString() public view returns(string memory) {
+    function returnFuncSignatureHexadecimalString() public pure returns(string memory) {
         //abi.encodePacked(bytes4(keccak256(abi.encodePacked('counter',"()"))));
         return "61bc221a";
     }
