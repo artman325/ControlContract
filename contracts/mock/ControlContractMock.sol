@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.11;
 pragma experimental ABIEncoderV2;
 
 import "../ControlContract.sol";
@@ -11,12 +11,12 @@ contract ControlContractMock is ControlContract {
         return groupTimeoutActivity;
     }
     
-    function getNow() public view returns(uint256) {
-        return block.timestamp;
-    }
-    function getCurrentGroupIndex() public view returns(uint256) {
-        return currentGroupIndex;
-    }
+    // function getNow() public view returns(uint256) {
+    //     return block.timestamp;
+    // }
+    // function getCurrentGroupIndex() public view returns(uint256) {
+    //     return currentGroupIndex;
+    // }
     
     // function getEndorseAllowedMock(address tokenAddr, string memory method, address sender) public view  returns(uint256[] memory list) {
       

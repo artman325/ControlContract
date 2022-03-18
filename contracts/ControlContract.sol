@@ -1,24 +1,23 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.11;
 
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
-
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
+
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 import "./interfaces/ICommunity.sol";
-import "./lib/StringUtils.sol";
-import "./IntercoinTrait.sol";
+import "./interfaces/IControlContract.sol";
 
-contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, IntercoinTrait {
-    using MathUpgradeable for uint256;
-    using SafeMathUpgradeable for uint256;
+import "./lib/StringUtils.sol";
+//deprecated
+//import "./IntercoinTrait.sol";
+
+contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, IControlContract/*, IntercoinTrait*/ {
+    
     using AddressUpgradeable for address;
     
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
@@ -27,20 +26,6 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
     using StringUtils for *;
     
     ICommunity communityAddress;
-    
-    struct Operation {
-        address addr;
-        string method;
-        string params;
-        uint256 minimum;
-        uint256 fraction;
-        EnumerableSetUpgradeable.AddressSet endorsedAccounts;
-        bool proceed;
-        string proceededRole;
-        bool success;
-        bytes msg;
-        bool exists;
-    }
     
     uint256 internal groupTimeoutActivity;
     
@@ -54,36 +39,15 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
     // mapping(bytes32 => EnumerableSetUpgradeable.UintSet) invokeAllowed;
     // mapping(bytes32 => EnumerableSetUpgradeable.UintSet) endorseAllowed;
     
-    struct Method {
-        address addr;
-        string method;
-        uint256 minimum;
-        uint256 fraction;
-        bool exists;
-        EnumerableSetUpgradeable.UintSet invokeRolesAllowed;
-        EnumerableSetUpgradeable.UintSet endorseRolesAllowed;
-    }
     mapping(bytes32 => Method) methods;
     
 
     uint256 internal fractionDiv; //  = 1e10
     
-    struct Group {
-        uint256 index;
-        uint256 lastSeenTime;
-        EnumerableSetUpgradeable.UintSet invokeRoles;
-        EnumerableSetUpgradeable.UintSet endorseRoles;
-        mapping(uint256 => Operation) operations;
-        mapping(uint40 => uint256) pairWeiInvokeId;
-        bool active;
-    }
-
+    
     mapping(uint256 => Group) internal groups;
     
-    struct GroupRolesSetting {
-        string invokeRole;
-        string endorseRole;
-    }
+    
     
     //----------------------------------------------------
     // modifiers section 
@@ -133,6 +97,8 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
      * @dev here invokeRole can equal endorseRole withih one group but can't be in other groups
      * @param communityAddr community address
      * @param groupRoles tuples of GroupRolesSetting
+     * @custom:calledby factory
+     * @custom:shortd initialize while factory produce
      */
     function init(
         ICommunity communityAddr,
@@ -191,6 +157,8 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
      * @param method method of external token that would be executed
      * @param params params of external token's method
      * @return invokeID identificator
+     * @custom:calledby persons with invoke roles
+     * @custom:shortd invoke methods
      */
     function invoke(
         address tokenAddr,
@@ -225,6 +193,8 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
     
     /**
      * @param invokeID invoke identificator
+     * @custom:calledby persons with endorse roles
+     * @custom:shortd endorse methods by invokeID
      */
     function endorse(
         uint256 invokeID
@@ -239,9 +209,11 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
      * @param tokenAddr token's address
      * @param method hexademical method's string
      * @param invokeRoleName invoke rolename
-     * @param invokeRoleName endorse rolename
+     * @param endorseRoleName endorse rolename
      * @param minimum  minimum
      * @param fraction fraction value mul by 1e10
+     * @custom:calledby owner
+     * @custom:shortd adding method to be able to invoke
      */
     function addMethod(
         address tokenAddr,
@@ -269,10 +241,6 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
             );
         }
         
-        
-        
-        
-        
         methods[k].exists = true;
         methods[k].addr = tokenAddr;
         methods[k].method = method;
@@ -287,6 +255,8 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
      * prolonging user current group ownership. 
      * or transferring to next if previous expired
      * or restore previous if user belong to group which index less then current
+     * @custom:calledby anyone
+     * @custom:shortd prolonging user current group ownership
      */
     function heartbeat(
     ) 
@@ -303,7 +273,7 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
                     groups[i].invokeRoles.contains(roleIDs[roles[j]]) ||
                     groups[i].endorseRoles.contains(roleIDs[roles[j]])
                 ) {
-                    len = len.add(1);
+                    len += 1;
                 }
           }
         }
@@ -317,12 +287,12 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
                 ) {
                     
                     userRoleIndexes[ii] = i;
-                    ii = ii.add(1);
+                    ii += 1;
                 }
             }
         }
         
-        uint256 expectGroupIndex = getExpectGroupIndex();
+        uint256 expectGroupIndex = _getExpectGroupIndex();
 
         bool isBreak = false;
         uint256 itGroupIndex;
@@ -347,7 +317,7 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
             currentGroupIndex = itGroupIndex;
             groups[itGroupIndex].lastSeenTime = block.timestamp;
             
-            HeartBeat(currentGroupIndex, block.timestamp);
+            emit HeartBeat(currentGroupIndex, block.timestamp);
         } else {
             revert("Sender is out of current owner group");
         }
@@ -357,6 +327,8 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
     
     /**
      * @return index expected groupIndex.
+     * @custom:calledby anyone
+     * @custom:shortd showing expected group index
      */
     function getExpectGroupIndex(
     ) 
@@ -364,43 +336,33 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
         view 
         returns(uint256 index) 
     {
-
-        index = currentGroupIndex;
-        if (groups[currentGroupIndex].lastSeenTime.add(groupTimeoutActivity) < block.timestamp) {
-            index = currentGroupIndex.add(
-                (block.timestamp.sub(groups[currentGroupIndex].lastSeenTime)).div(groupTimeoutActivity)
-            );
-            if (maxGroupIndex < index) {
-                index = maxGroupIndex;
-            }
-        }
+        return _getExpectGroupIndex();
     }
     
     //----------------------------------------------------
     // internal section 
     //----------------------------------------------------
+    
     /**
-     * @param value value that need to find
-     * @param arr source uint256[] array
-     * @return ret true if value is exists in uint256[] array
-     */
-    function isExistsInArray(
-        uint256 value, 
-        uint256[] memory arr
+    * @return index expected groupIndex.
+    */
+    function _getExpectGroupIndex(
     ) 
-        internal 
-        pure 
-        returns(bool ret) 
+        internal
+        view 
+        returns(uint256 index) 
     {
-        ret = false;
-        for (uint256 i = 0; i < arr.length; i++) {
-            if (value == arr[i]) {
-                ret = true;
-                break;
+
+        index = currentGroupIndex;
+        if (groups[currentGroupIndex].lastSeenTime + groupTimeoutActivity < block.timestamp) {
+            index = currentGroupIndex + (
+                (block.timestamp - groups[currentGroupIndex].lastSeenTime) / groupTimeoutActivity
+            );
+            if (maxGroupIndex <= index) {
+                index = maxGroupIndex-1;
             }
         }
     }
-    
     
     /**
      * @param invokeID invoke identificator
@@ -424,11 +386,14 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
         uint256 memberCount;
         for (uint256 i = 0; i < roles.length; i++) {
             memberCount = ICommunity(communityAddress).memberCount(roles[i]);
-            if (
-                groups[currentGroupIndex].operations[invokeID].endorsedAccounts.length() >= 
-                groups[currentGroupIndex].operations[invokeID].minimum.max(
-                    memberCount.mul(groups[currentGroupIndex].operations[invokeID].fraction).div(fractionDiv))
-            ) {
+            //---
+            uint256 max;
+            max = memberCount * (groups[currentGroupIndex].operations[invokeID].fraction) / (fractionDiv);
+            if (groups[currentGroupIndex].operations[invokeID].minimum > max) {
+                max = groups[currentGroupIndex].operations[invokeID].minimum;
+            }
+            //---
+            if (groups[currentGroupIndex].operations[invokeID].endorsedAccounts.length() >= max) {
                 groups[currentGroupIndex].operations[invokeID].proceed = true;
                 (
                     groups[currentGroupIndex].operations[invokeID].success, 
@@ -469,7 +434,7 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
 
         for (uint256 i = 0; i < roles.length; i++) {
             if (methods[keccak256(abi.encodePacked(tokenAddr,method))].endorseRolesAllowed.contains(roleIDs[roles[i]])) {
-                len = len.add(1);
+                len += 1;
             }
         }
         string[] memory list = new string[](len);
@@ -477,7 +442,7 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
         for (uint256 i = 0; i < roles.length; i++) {
             if (methods[keccak256(abi.encodePacked(tokenAddr,method))].endorseRolesAllowed.contains(roleIDs[roles[i]])) {
                 list[j] = roles[i];
-                j = j.add(1);
+                j += 1;
             }
         }
         return list;
@@ -497,7 +462,7 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, Inte
         returns(uint256 index) 
     {
         if (roleIDs[roleName] == 0) {
-            lastRoleIndex = lastRoleIndex.add(1);
+            lastRoleIndex += 1;
             roleIDs[roleName] = lastRoleIndex;
             index = lastRoleIndex;
         } else {
