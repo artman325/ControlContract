@@ -14,12 +14,12 @@ require("@hardhat-docgen/core")
 require("./docgen-custom-markdown")
 
 
-const kovanURL = `https://eth-kovan.alchemyapi.io/v2/${env.ALCHEMY_KOVAN}`
-const goerliURL = `https://eth-goerli.alchemyapi.io/v2/${env.ALCHEMY_GOERLI}`
-const rinkebyURL = `https://rinkeby.infura.io/v3/${env.INFURA_ID_PROJECT}` //`https://eth-rinkeby.alchemyapi.io/v2/${env.ALCHEMY_RINKEBY}`
-const bscURL = 'https://bsc-dataseed.binance.org' //`https://eth-rinkeby.alchemyapi.io/v2/${env.ALCHEMY_RINKEBY}`
-const mainnetURL = `https://eth-mainnet.alchemyapi.io/v2/${env.ALCHEMY_MAINNET}`
-const maticURL = `https://polygon-mainnet.g.alchemy.com/v2/${env.ALCHEMY_MATIC}`
+const kovanURL = `https://eth-kovan.alchemyapi.io/v2/${process.env.ALCHEMY_KOVAN}`
+const goerliURL = `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_GOERLI}`
+const rinkebyURL = `https://rinkeby.infura.io/v3/${process.env.INFURA_ID_PROJECT}` //`https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_RINKEBY}`
+const bscURL = 'https://bsc-dataseed.binance.org' //`https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_RINKEBY}`
+const mainnetURL = `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_MAINNET}`
+const maticURL = `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_MATIC}`
 
 module.exports = {
   networks: {
@@ -34,42 +34,42 @@ module.exports = {
       url: kovanURL,
       chainId: 42,
       gas: 12000000,
-      accounts: {mnemonic: env.MNEMONIC},
+      accounts: {mnemonic: process.env.MNEMONIC},
       saveDeployments: true
     },
     goerli: {
       url: goerliURL,
       chainId: 5,
       gasPrice: 1000,
-      accounts: {mnemonic: env.MNEMONIC},
+      accounts: {mnemonic: process.env.MNEMONIC},
       saveDeployments: true
     },
     rinkeby: {
       url: rinkebyURL,
       chainId: 4,
       gasPrice: "auto",
-      accounts: {mnemonic: env.MNEMONIC},
+      accounts: {mnemonic: process.env.MNEMONIC},
       saveDeployments: true
     },
     bsc: {
       url: bscURL,
       chainId: 56,
       gasPrice: "auto",
-      accounts: {mnemonic: env.MNEMONIC},
+      accounts: {mnemonic: process.env.MNEMONIC},
       saveDeployments: true
     },
     matic: {
       url: maticURL,
       chainId: 137,
       gasPrice: "auto",
-      accounts: {mnemonic: env.MNEMONIC},
+      accounts: {mnemonic: process.env.MNEMONIC},
       saveDeployments: true
     },
     mainnet: {
       url: mainnetURL,
       chainId: 1,
       gasPrice: 20000000000,
-      accounts: {mnemonic: env.MNEMONIC},
+      accounts: {mnemonic: process.env.MNEMONIC},
       saveDeployments: true
     }
   },
@@ -80,12 +80,12 @@ module.exports = {
     runOnCompile: false,
   },
   gasReporter: {
-    enabled: env.REPORT_GAS !== undefined,
+    enabled: process.env.REPORT_GAS !== undefined,
     currency: "USD"
   },
   etherscan: {
-    //apiKey: env.MATIC_API_KEY
-    apiKey: env.ETHERSCAN_API_KEY
+    //apiKey: process.env.MATIC_API_KEY
+    apiKey: process.env.ETHERSCAN_API_KEY
   },
   solidity: {
     compilers: [
@@ -134,7 +134,7 @@ module.exports = {
   },
   gasReporter: {
     currency: 'USD',
-    enabled: (env.REPORT_GAS === "true") ? true : false
+    enabled: (process.env.REPORT_GAS === "true") ? true : false
   },
   mocha: {
     timeout: 200000
