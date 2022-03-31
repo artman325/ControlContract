@@ -53,13 +53,13 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICon
     // modifiers section 
     //----------------------------------------------------
     modifier canInvoke(
-        address tokenAddr, 
+        address contractAddress, 
         string memory method, 
         address sender
     ) 
     {
         bool s = false;
-        bytes32 k = keccak256(abi.encodePacked(tokenAddr,method));
+        bytes32 k = keccak256(abi.encodePacked(contractAddress,method));
         string[] memory roles = ICommunity(communityAddress).getRoles(sender);
         for (uint256 i = 0; i < roles.length; i++) {
             if (methods[k].invokeRolesAllowed.contains(roleIDs[roles[i]])) {
@@ -73,7 +73,7 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICon
     //----------------------------------------------------
     // events section 
     //----------------------------------------------------
-    event OperationInvoked(uint256 indexed invokeID, uint40 invokeIDWei,  address tokenAddr, string method, string params);
+    event OperationInvoked(uint256 indexed invokeID, uint40 invokeIDWei,  address contractAddress, string method, string params);
     event OperationEndorsed(uint256 indexed invokeID, uint40 invokeIDWei);
     event OperationExecuted(uint256 indexed invokeID, uint40 invokeIDWei);
     event HeartBeat(uint256 groupIndex, uint256 time);
@@ -153,7 +153,7 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICon
     }
     
     /**
-     * @param tokenAddr address of external token
+     * @param contractAddress address of external token
      * @param method method of external token that would be executed
      * @param params params of external token's method
      * @return invokeID identificator
@@ -161,15 +161,15 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICon
      * @custom:shortd invoke methods
      */
     function invoke(
-        address tokenAddr,
+        address contractAddress,
         string memory method,
         string memory params
     )
         public 
-        canInvoke(tokenAddr, method, _msgSender())
+        canInvoke(contractAddress, method, _msgSender())
         returns(uint256 invokeID, uint40 invokeIDWei)
     {
-        bytes32 k = keccak256(abi.encodePacked(tokenAddr,method));
+        bytes32 k = keccak256(abi.encodePacked(contractAddress,method));
         require(methods[k].exists == true, "Such method does not exists");
         
         heartbeat();
@@ -179,7 +179,7 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICon
         
         groups[currentGroupIndex].pairWeiInvokeId[invokeIDWei] = invokeID;
         
-        emit OperationInvoked(invokeID, invokeIDWei, tokenAddr, method, params);
+        emit OperationInvoked(invokeID, invokeIDWei, contractAddress, method, params);
         
         groups[currentGroupIndex].operations[invokeID].addr = methods[k].addr;
         groups[currentGroupIndex].operations[invokeID].method = methods[k].method;
@@ -206,7 +206,7 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICon
     }
 
     /**
-     * @param tokenAddr token's address
+     * @param contractAddress token's address
      * @param method hexademical method's string
      * @param invokeRoleName invoke rolename
      * @param endorseRoleName endorse rolename
@@ -216,7 +216,7 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICon
      * @custom:shortd adding method to be able to invoke
      */
     function addMethod(
-        address tokenAddr,
+        address contractAddress,
         string memory method,
         string memory invokeRoleName,
         string memory endorseRoleName,
@@ -226,7 +226,7 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICon
         public 
         onlyOwner 
     {
-        bytes32 k = keccak256(abi.encodePacked(tokenAddr,method));
+        bytes32 k = keccak256(abi.encodePacked(contractAddress,method));
         
         require(roleExists(invokeRoleName), "Rolename does not exists");
         require(roleExists(endorseRoleName), "Rolename does not exists");
@@ -242,7 +242,7 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICon
         }
         
         methods[k].exists = true;
-        methods[k].addr = tokenAddr;
+        methods[k].addr = contractAddress;
         methods[k].method = method;
         methods[k].minimum = minimum;
         methods[k].fraction = fraction;
@@ -415,13 +415,13 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICon
     /**
      * getting all endorse roles by sender's address and expected pair contract/method
      * 
-     * @param tokenAddr token's address
+     * @param contractAddress token's address
      * @param method hexademical method's string
      * @param sender sender address
      * @return endorse roles 
      */
     function getEndorsedRoles(
-        address tokenAddr, 
+        address contractAddress, 
         string memory method, 
         address sender
     ) 
@@ -433,14 +433,14 @@ contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICon
         uint256 len;
 
         for (uint256 i = 0; i < roles.length; i++) {
-            if (methods[keccak256(abi.encodePacked(tokenAddr,method))].endorseRolesAllowed.contains(roleIDs[roles[i]])) {
+            if (methods[keccak256(abi.encodePacked(contractAddress,method))].endorseRolesAllowed.contains(roleIDs[roles[i]])) {
                 len += 1;
             }
         }
         string[] memory list = new string[](len);
         uint256 j = 0;
         for (uint256 i = 0; i < roles.length; i++) {
-            if (methods[keccak256(abi.encodePacked(tokenAddr,method))].endorseRolesAllowed.contains(roleIDs[roles[i]])) {
+            if (methods[keccak256(abi.encodePacked(contractAddress,method))].endorseRolesAllowed.contains(roleIDs[roles[i]])) {
                 list[j] = roles[i];
                 j += 1;
             }

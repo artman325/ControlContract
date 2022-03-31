@@ -54,7 +54,7 @@ method will initiate a creation transaction. return `invokeID` - invoke identifi
 Params:
 name  | type | description
 --|--|--
-tokenAddr|address|address of external token
+contractAddress|address|address of external token
 method|hexadecimal string|method of external token that would be executed
 params|hexadecimal string|params of external token's method
 
@@ -66,12 +66,12 @@ name  | type | description
 invokeID|uint256|invoke identificator
 
 ## addMethod
-allow participant with `invokeRoleName`/`endorseRoleName` to invoke/endorse transaction with `method` of `tokenAddr`<br/>
+allow participant with `invokeRoleName`/`endorseRoleName` to invoke/endorse transaction with `method` of `contractAddress`<br/>
 Note that attemptштп add method with different fraction/minimum will revert. so can be added only one time. But roles can be added it any time, just add the same fraction/minimum
 Params:
 name  | type | description
 --|--|--
-tokenAddr|address|address of external token
+contractAddress|address|address of external token
 method|hexadecimal string|method of external token that would be executed
 invokeRoleName|string| invoke role name
 endorseRoleName|string| endorse role name
@@ -87,7 +87,7 @@ name  | type | description
 --|--|--
 invokeID|uint256|invokeID
 invokeIDWei|uint40|invokeIDWei
-tokenAddr|address| token's address
+contractAddress|address| token's address
 method|hexadecimal string| method of external token that would be executed
 params|hexadecimal string| method's params
 
