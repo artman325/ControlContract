@@ -4,6 +4,7 @@
   "description": "Smart contract for managing community membership and roles",
   "main": "index.js",
   "scripts": {
+    "start": "hardhat node",
     "test": "hardhat test"
   },
   "repository": {
