@@ -24,7 +24,6 @@ const maticURL = `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY
 module.exports = {
   networks: {
     hardhat: {
-      url: "http://localhost:8545",
       allowUnlimitedContractSize: false,
       forking: {
         url: mainnetURL,
