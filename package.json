@@ -4,8 +4,8 @@
   "description": "Smart contract for managing community membership and roles",
   "main": "index.js",
   "scripts": {
-    "start": "hardhat node --network hardhat",
-    "test": "hardhat test --network hardhat"
+    "start": "npx hardhat node --network hardhat",
+    "test": "npx hardhat test --network hardhat"
   },
   "repository": {
     "type": "git",
