@@ -25,6 +25,6 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npx hardhat compile
-    - run: npx hardhat test
+    - run: yarn install
+    - run: yarn prettier
+    - run: yarn test
