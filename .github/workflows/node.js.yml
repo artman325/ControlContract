@@ -13,7 +13,6 @@ jobs:
   build:
     environment: env
     runs-on: ubuntu-latest
-    
     strategy:
       matrix:
         node-version: [16.x]
@@ -24,26 +23,6 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-    - name: try to print 
-      env: 
-        DAY_OF_WEEK: Monday
-        ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }} 
-        MNEMONIC: ${{ secrets.MNEMONIC }} 
-        ALCHEMY_MATIC: ${{ secrets.ALCHEMY_MATIC }} 
-        ALCHEMY_MAINNET: ${{ secrets.ALCHEMY_MAINNET }} 
-        ALCHEMY_RINKEBY: ${{ secrets.ALCHEMY_RINKEBY }} 
-        ALCHEMY_GOERLI: ${{ secrets.ALCHEMY_GOERLI }} 
-        ALCHEMY_KOVAN: ${{ secrets.ALCHEMY_KOVAN }} 
-        INFURA_ID_PROJECT: ${{ secrets.INFURA_ID_PROJECT }} 
-      run: |
-        echo 'The GitHub Action Secret will be masked:  '
-        echo ${{ secrets.GITHUB_TOKEN }}
-        echo 'Testing secret if its masked: '
-        echo 'ETHERSCAN_API_KEY: '
-        echo ${{ secrets.ETHERSCAN_API_KEY }}
-        printenv
-#    - name: try to npm install
-#      run: npm install
     - name: hardhat install
       run: npm install hardhat
     - name: npx install
