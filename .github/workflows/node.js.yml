@@ -27,8 +27,6 @@ jobs:
     
 #    - name: try to npm install
 #      run: npm install
-    - name: cross-env install
-      run: npm install cross-env
     - name: hardhat install
       run: npm install hardhat
     - name: npx install
@@ -44,7 +42,7 @@ jobs:
         ALCHEMY_GOERLI: ${{ secrets.ALCHEMY_GOERLI }} 
         ALCHEMY_KOVAN: ${{ secrets.ALCHEMY_KOVAN }} 
         INFURA_ID_PROJECT: ${{ secrets.INFURA_ID_PROJECT }} 
-      run: cross-env npx hardhat test
+      run: npx hardhat test
     
 
         
