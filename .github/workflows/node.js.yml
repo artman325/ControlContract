@@ -43,7 +43,7 @@ jobs:
         ALCHEMY_GOERLI: ${{ secrets.ALCHEMY_GOERLI }} 
         ALCHEMY_KOVAN: ${{ secrets.ALCHEMY_KOVAN }} 
         INFURA_ID_PROJECT: ${{ secrets.INFURA_ID_PROJECT }} 
-      run: npm hardhat test
+      run: npx hardhat test
     
 
         
