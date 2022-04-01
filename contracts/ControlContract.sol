@@ -17,7 +17,7 @@ import "./lib/StringUtils.sol";
 //import "./IntercoinTrait.sol";
 
 contract ControlContract is OwnableUpgradeable, ReentrancyGuardUpgradeable, IControlContract/*, IntercoinTrait*/ {
-  asdasdasd Error  
+  
     using AddressUpgradeable for address;
     
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
