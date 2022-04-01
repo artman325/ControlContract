@@ -24,18 +24,6 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-    - run: yarn install
-    - name: start node
-      run: yarn start
-      env: 
-        ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }} 
-        MNEMONIC: ${{ secrets.MNEMONIC }} 
-        ALCHEMY_MATIC: ${{ secrets.ALCHEMY_MATIC }} 
-        ALCHEMY_MAINNET: ${{ secrets.ALCHEMY_MAINNET }} 
-        ALCHEMY_RINKEBY: ${{ secrets.ALCHEMY_RINKEBY }} 
-        ALCHEMY_GOERLI: ${{ secrets.ALCHEMY_GOERLI }} 
-        ALCHEMY_KOVAN: ${{ secrets.ALCHEMY_KOVAN }} 
-        INFURA_ID_PROJECT: ${{ secrets.INFURA_ID_PROJECT }} 
     - name: Run test
       run: yarn test
       env: 
