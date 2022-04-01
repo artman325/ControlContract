@@ -21,7 +21,7 @@ const bscURL = 'https://bsc-dataseed.binance.org' //`https://eth-rinkeby.alchemy
 const mainnetURL = 'https://mainnet.infura.io/v3/905e942e2ccf4c8d8e86871f0950d5d8'//`https://rinkeby.infura.io/v3/${process.env.INFURA_ID_PROJECT}`//`https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_MAINNET}`
 const maticURL = `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_MATIC}`
 
-echo `${process.env.ALCHEMY_MATIC}`;
+console.log(`${process.env.ALCHEMY_MATIC}`);
 
 module.exports = {
   networks: {
