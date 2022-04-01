@@ -33,7 +33,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - name: try to read Env var
-      run: echo ($ETHERSCAN_API_KEY) = ($ETHERSCAN_API_KEY)
+      run: echo "(ETHERSCAN_API_KEY) = ($ETHERSCAN_API_KEY)"
     - name: hardhat install
       run: npm install hardhat
     - name: Run test
