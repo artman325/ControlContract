@@ -28,8 +28,8 @@ jobs:
 #    - name: try to npm install
 #      run: npm install
     
-#    - name: hardhat install
-#      run: npm install hardhat
+    - name: hardhat install
+      run: npm install hardhat
     - name: Run test
       env: 
         DAY_OF_WEEK: Monday
