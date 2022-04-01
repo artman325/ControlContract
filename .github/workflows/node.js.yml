@@ -24,7 +24,14 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-    
+    - name: try to print 
+      run: |
+        echo 'The GitHub Action Secret will be masked:  '
+        echo ${{ secrets.GITHUB_TOKEN }}
+        echo 'Testing secret if its masked: '
+        echo 'ETHERSCAN_API_KEY: '
+        echo ${{ secrets.ETHERSCAN_API_KEY }}
+        printenv
 #    - name: try to npm install
 #      run: npm install
     - name: hardhat install
