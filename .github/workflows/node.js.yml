@@ -13,38 +13,35 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    env: 
+      DAY_OF_WEEK: Monday
+      ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }} 
+      MNEMONIC: ${{ secrets.MNEMONIC }} 
+      ALCHEMY_MATIC: ${{ secrets.ALCHEMY_MATIC }} 
+      ALCHEMY_MAINNET: ${{ secrets.ALCHEMY_MAINNET }} 
+      ALCHEMY_RINKEBY: ${{ secrets.ALCHEMY_RINKEBY }} 
+      ALCHEMY_GOERLI: ${{ secrets.ALCHEMY_GOERLI }} 
+      ALCHEMY_KOVAN: ${{ secrets.ALCHEMY_KOVAN }} 
+      INFURA_ID_PROJECT: ${{ secrets.INFURA_ID_PROJECT }} 
     strategy:
       matrix:
         node-version: [16.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
     steps:
     - uses: actions/checkout@v3
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-    - name: try to npm build
-      run: npm run build
-    - name: try to read Env var
-      run: echo "(ETHERSCAN_API_KEY) = ($ETHERSCAN_API_KEY)"
-    - name: try to read Env var2
-      run: echo "Greeting First_Name. Today is $DAY_OF_WEEK! $DAY_FIRST."
+    - name: try to npm install
+      run: npm install
+    
     - name: hardhat install
       run: npm install hardhat
+    - name: try to npm compile
+      run: npm compile
     - name: Run test
-      run: yarn test
-      env: 
-        DAY_OF_WEEK: Monday
-        ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }} 
-        MNEMONIC: ${{ secrets.MNEMONIC }} 
-        ALCHEMY_MATIC: ${{ secrets.ALCHEMY_MATIC }} 
-        ALCHEMY_MAINNET: ${{ secrets.ALCHEMY_MAINNET }} 
-        ALCHEMY_RINKEBY: ${{ secrets.ALCHEMY_RINKEBY }} 
-        ALCHEMY_GOERLI: ${{ secrets.ALCHEMY_GOERLI }} 
-        ALCHEMY_KOVAN: ${{ secrets.ALCHEMY_KOVAN }} 
-        INFURA_ID_PROJECT: ${{ secrets.INFURA_ID_PROJECT }} 
-
+      run: npm hardhat test
 
         
         
