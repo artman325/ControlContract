@@ -1,3 +1,5 @@
+[![Node.js CI](https://github.com/artman325/ControlContract/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/artman325/ControlContract/actions/workflows/node.js.yml)
+
 # ControlContract
 Lets a community collectively manage a wallet and tokens by calliing any method from external contract
 
