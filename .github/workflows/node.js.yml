@@ -13,16 +13,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    env: 
-      DAY_OF_WEEK: Monday
-      ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }} 
-      MNEMONIC: ${{ secrets.MNEMONIC }} 
-      ALCHEMY_MATIC: ${{ secrets.ALCHEMY_MATIC }} 
-      ALCHEMY_MAINNET: ${{ secrets.ALCHEMY_MAINNET }} 
-      ALCHEMY_RINKEBY: ${{ secrets.ALCHEMY_RINKEBY }} 
-      ALCHEMY_GOERLI: ${{ secrets.ALCHEMY_GOERLI }} 
-      ALCHEMY_KOVAN: ${{ secrets.ALCHEMY_KOVAN }} 
-      INFURA_ID_PROJECT: ${{ secrets.INFURA_ID_PROJECT }} 
+    
     strategy:
       matrix:
         node-version: [16.x]
@@ -40,10 +31,21 @@ jobs:
     
     - name: hardhat install
       run: npm install hardhat
-    - name: try to npm compile
-      run: npm run compile
     - name: Run test
-      run: npm run test
+      env: 
+        DAY_OF_WEEK: Monday
+        ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }} 
+        MNEMONIC: ${{ secrets.MNEMONIC }} 
+        ALCHEMY_MATIC: ${{ secrets.ALCHEMY_MATIC }} 
+        ALCHEMY_MAINNET: ${{ secrets.ALCHEMY_MAINNET }} 
+        ALCHEMY_RINKEBY: ${{ secrets.ALCHEMY_RINKEBY }} 
+        ALCHEMY_GOERLI: ${{ secrets.ALCHEMY_GOERLI }} 
+        ALCHEMY_KOVAN: ${{ secrets.ALCHEMY_KOVAN }} 
+        INFURA_ID_PROJECT: ${{ secrets.INFURA_ID_PROJECT }} 
+      run: |
+          yarn build
+          yarn test
+    
 
         
         
