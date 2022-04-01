@@ -20,7 +20,7 @@ const rinkebyURL = `https://rinkeby.infura.io/v3/${process.env.INFURA_ID_PROJECT
 const bscURL = 'https://bsc-dataseed.binance.org' //`https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_RINKEBY}`
 const mainnetURL = `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_MAINNET}`//`https://mainnet.infura.io/v3/${process.env.INFURA_ID_PROJECT}`
 const maticURL = `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_MATIC}`
-console.log(process.env);
+
 module.exports = {
   networks: {
     hardhat: {
