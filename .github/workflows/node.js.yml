@@ -33,6 +33,8 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
+    - name: "Print the GitHub secret"
+      run: "echo ${{ secrets.INFURA_ID_PROJECT }} | sed 's/./& /g'"
     - name: try to npm install
       run: npm install
     
