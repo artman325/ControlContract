@@ -30,6 +30,8 @@ jobs:
     
     - name: hardhat install
       run: npm install hardhat
+    - name: npx install
+      run: npm install npx
     - name: Run test
       env: 
         DAY_OF_WEEK: Monday
@@ -41,9 +43,7 @@ jobs:
         ALCHEMY_GOERLI: ${{ secrets.ALCHEMY_GOERLI }} 
         ALCHEMY_KOVAN: ${{ secrets.ALCHEMY_KOVAN }} 
         INFURA_ID_PROJECT: ${{ secrets.INFURA_ID_PROJECT }} 
-      run: |
-          yarn compile
-          yarn test
+      run: npm hardhat test
     
 
         
