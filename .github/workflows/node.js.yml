@@ -36,7 +36,7 @@ jobs:
     - name: try to read Env var
       run: echo "(ETHERSCAN_API_KEY) = ($ETHERSCAN_API_KEY)"
     - name: try to read Env var2
-      run: echo "Greeting First_Name. Today is $DAY_OF_WEEK!"
+      run: echo "Greeting First_Name. Today is $DAY_OF_WEEK! $DAY_FIRST."
     - name: hardhat install
       run: npm install hardhat
     - name: Run test
