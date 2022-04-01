@@ -39,9 +39,9 @@ jobs:
     - name: hardhat install
       run: npm install hardhat
     - name: try to npm compile
-      run: npm compile
+      run: npm run compile
     - name: Run test
-      run: npm hardhat test
+      run: npm run test
 
         
         
